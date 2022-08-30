@@ -21,6 +21,13 @@ func main() {
 	// ARRAYS INTERNOS
 
 	slice3 := make([]float32, 10, 15)
+	slice3 = append(slice3, 5)
+	slice3 = append(slice3, 6)
+	slice3 = append(slice3, 6)
+	slice3 = append(slice3, 6)
+	slice3 = append(slice3, 6)
+	slice3 = append(slice3, 6)
+	slice3 = append(slice3, 6)
 
 	fmt.Println(slice3)
 	fmt.Println(len(slice3))
