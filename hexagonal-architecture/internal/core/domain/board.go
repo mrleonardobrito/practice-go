@@ -1,5 +1,10 @@
 package domain
 
+import (
+	"math/rand"
+	"time"
+)
+
 const (
 	CELL_BOMB       = "X"
 	CELL_REVEALED   = "O"
@@ -16,15 +21,41 @@ type Board [][]string
 
 func NewBoard(size uint, quant_bombs uint) Board {
 	board := NewEmptyBoard(size)
-	board.fillWithBombs(quant_bombs)
+	board.FillWithBombs(quant_bombs)
 
 	return board
 }
 
-func (board *Board) fillWithBombs(quant_bombs uint) {
-	// positions := getRandomPositions(quant_bombs)
+func (board Board) FillWithBombs(quant_bombs uint) {
+	rows := len(board)
+	cols := len(board[0])
+	positions := GetRandomPositions(uint(rows*cols), quant_bombs)
 
-	// fmt.Println(positions)
+	var row, col int
+
+	for _, pos := range positions {
+		row = pos / cols
+		col = pos - row*rows
+
+		board[row][col] = CELL_BOMB
+	}
+}
+
+func (board Board) HideBombs() Board {
+	size := uint(len(board))
+	newBoard := NewEmptyBoard(size)
+
+	for i := range newBoard {
+		for j, space := range newBoard[0] {
+			if space == CELL_BOMB {
+				space = CELL_BOMB_HIDED
+			} else {
+				space = board[i][j]
+			}
+		}
+	}
+
+	return newBoard
 }
 
 func NewEmptyBoard(size uint) Board {
@@ -41,4 +72,17 @@ func NewEmptyBoard(size uint) Board {
 	}
 
 	return board
+}
+
+func GetRandomPositions(board_size uint, quant_bombs uint) []int {
+	rand.Seed(time.Now().UnixNano())
+	p := rand.Perm(int(board_size))
+
+	positions := []int{}
+
+	for _, r := range p[:quant_bombs] {
+		positions = append(positions, r)
+	}
+
+	return positions
 }

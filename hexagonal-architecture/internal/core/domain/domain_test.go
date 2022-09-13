@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"campo-bombado/internal/core/domain"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,5 +24,7 @@ func TestNewBoard(t *testing.T) {
 
 	assert.Equal(t, uint(len(board)), size)
 	assert.Equal(t, uint(len(board[0])), size)
-	assert.Equal(t, count_bombs, quant_bombs)
+	assert.Equal(t, quant_bombs, count_bombs)
+
+	fmt.Println(board)
 }
