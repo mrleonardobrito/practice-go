@@ -12,11 +12,6 @@ const (
 	CELL_BOMB_HIDED = "-"
 )
 
-type BoardSettings struct {
-	Size  uint `json:"size"`
-	Bombs uint `json:"bombs"`
-}
-
 type Board [][]string
 
 func NewBoard(size uint, quant_bombs uint) Board {
@@ -29,7 +24,7 @@ func NewBoard(size uint, quant_bombs uint) Board {
 func (board Board) FillWithBombs(quant_bombs uint) {
 	rows := len(board)
 	cols := len(board[0])
-	positions := GetRandomPositions(uint(rows*cols), quant_bombs)
+	positions := getRandomPositions(uint(rows*cols), quant_bombs)
 
 	var row, col int
 
@@ -58,6 +53,30 @@ func (board Board) HideBombs() Board {
 	return newBoard
 }
 
+func (board Board) IsValidPosition(row uint, col uint) bool {
+	return row < uint(len(board)) && col < uint(len(board[0]))
+}
+
+func (board Board) Contains(row uint, col uint, element string) bool {
+	return board[row][col] == element
+}
+
+func (board Board) Set(row uint, col uint, element string) {
+	board[row][col] = element
+}
+
+func (board Board) HasEmptyCells() bool {
+	for row := range board {
+		for col := range board[0] {
+			if board[row][col] == CELL_EMPTY {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func NewEmptyBoard(size uint) Board {
 	board := make([][]string, size)
 
@@ -74,7 +93,7 @@ func NewEmptyBoard(size uint) Board {
 	return board
 }
 
-func GetRandomPositions(board_size uint, quant_bombs uint) []int {
+func getRandomPositions(board_size uint, quant_bombs uint) []int {
 	rand.Seed(time.Now().UnixNano())
 	p := rand.Perm(int(board_size))
 
