@@ -1,4 +1,4 @@
-package services
+package gamesrv
 
 import (
 	"campo-bombado/internal/core/domain"
@@ -10,14 +10,14 @@ import (
 )
 
 type service struct {
-	gamesRepository ports.GameRepository
-	uidgen          uidgen.UIDGen
+	gamesRepository ports.GamesRepository
+	uidGen          uidgen.UIDGen
 }
 
-func New(gamesRepository ports.GameRepository, uidgen uidgen.UIDGen) *service {
+func New(gamesRepository ports.GamesRepository, uidGen uidgen.UIDGen) *service {
 	return &service{
 		gamesRepository: gamesRepository,
-		uidgen:          uidgen,
+		uidGen:          uidGen,
 	}
 }
 
@@ -41,20 +41,19 @@ func (srv *service) Create(name string, size uint, bombs uint) (domain.Game, err
 		return domain.Game{}, errors.New(apperrors.InvalidInput, nil, "the number of bombs is too high", "")
 	}
 
-	newGame := domain.NewGame(srv.uidgen.New(), name, size, bombs)
+	game := domain.NewGame(srv.uidGen.New(), name, size, bombs)
 
-	if err := srv.gamesRepository.Save(newGame); err != nil {
-		return domain.Game{}, errors.New(apperrors.Internal, err, "server failed to save the new game", "")
+	if err := srv.gamesRepository.Save(game); err != nil {
+		return domain.Game{}, errors.New(apperrors.Internal, err, "create game into repository has failed", "")
 	}
 
-	newGame.Board = newGame.Board.HideBombs()
+	game.Board = game.Board.HideBombs()
 
-	return newGame, nil
+	return game, nil
 }
 
-func (srv *service) RevealCell(id string, row uint, col uint) (domain.Game, error) {
-	gameFound, err := srv.Get(id)
-
+func (srv *service) Reveal(id string, row uint, col uint) (domain.Game, error) {
+	game, err := srv.gamesRepository.Get(id)
 	if err != nil {
 		if errors.Is(err, apperrors.NotFound) {
 			return domain.Game{}, errors.New(apperrors.NotFound, err, "game not found", "")
@@ -63,29 +62,29 @@ func (srv *service) RevealCell(id string, row uint, col uint) (domain.Game, erro
 		return domain.Game{}, errors.New(apperrors.Internal, err, "get game from repository has failed", "")
 	}
 
-	if !gameFound.Board.IsValidPosition(row, col) {
-		return domain.Game{}, errors.New(apperrors.InvalidInput, nil, "invalid position required", "")
+	if !game.Board.IsValidPosition(row, col) {
+		return domain.Game{}, errors.New(apperrors.InvalidInput, nil, "invalid position", "")
 	}
 
-	if gameFound.IsOver() {
-		return domain.Game{}, errors.New(apperrors.IllegalOperation, nil, "the game is over", "")
+	if game.IsOver() {
+		return domain.Game{}, errors.New(apperrors.IllegalOperation, nil, "game is over", "")
 	}
 
-	if gameFound.Board.Contains(row, col, domain.CELL_BOMB) {
-		gameFound.State = domain.GAME_STATE_LOST
+	if game.Board.Contains(row, col, domain.CELL_BOMB) {
+		game.State = domain.GAME_STATE_LOST
 	} else {
-		gameFound.Board.Set(row, col, domain.CELL_REVEALED)
+		game.Board.Set(row, col, domain.CELL_REVEALED)
 
-		if !gameFound.Board.HasEmptyCells() {
-			gameFound.State = domain.GAME_STATE_WON
+		if !game.Board.HasEmptyCells() {
+			game.State = domain.GAME_STATE_WON
 		}
 	}
 
-	if err := srv.gamesRepository.Save(gameFound); err != nil {
+	if err := srv.gamesRepository.Save(game); err != nil {
 		return domain.Game{}, errors.New(apperrors.Internal, err, "update game into repository has failed", "")
 	}
 
-	gameFound.Board = gameFound.Board.HideBombs()
+	game.Board = game.Board.HideBombs()
 
-	return gameFound, nil
+	return game, nil
 }
